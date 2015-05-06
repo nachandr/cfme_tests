@@ -8,23 +8,27 @@ from selenium.webdriver.common.by import By
 import cfme.web_ui.accordion as accordion
 import cfme.web_ui.toolbar as tb
 import cfme.fixtures.pytest_selenium as sel
+import time
 from cfme.web_ui import Form, Select, Tree, fill, flash, form_buttons
 from cfme.web_ui.menu import nav
 from utils.update import Updateable
 from utils.pretty import Pretty
 
 rate_tree = Tree("//div[@id='cb_rates_treebox']/ul")
+assignment_tree = Tree("//div[@id='cb_assignments_treebox']/ul")
 tb_select = partial(tb.select, "Configuration")
 tb_select_new_chargeback = nav.fn(partial(tb_select, "Add a new Chargeback Rate"))
 tb_select_edit_chargeback = nav.fn(partial(tb_select, "Edit this Chargeback Rate"))
 
 
 class RateFormItem(Pretty):
-    pretty_attrs = ['rate_loc', 'unit_select_loc']
+    pretty_attrs = ['rate_loc', 'unit_select_loc', 'assign_to', 'tag_category']
 
-    def __init__(self, rate_loc=None, unit_select_loc=None):
+    def __init__(self, rate_loc=None, unit_select_loc=None, assign_to=None, tag_category=None):
         self.rate_loc = rate_loc
         self.unit_select_loc = unit_select_loc
+        self.assign_to = assign_to
+        self.tag_category = tag_category
 
 
 def _mkitem(index):
@@ -118,13 +122,17 @@ nav.add_branch('chargeback',
                   'chargeback_rates_storage_named':
                   [lambda d: rate_tree.click_path('Rates', 'Storage', d['chargeback'].description),
                    {'chargeback_rates_storage_edit': tb_select_edit_chargeback}]}],
-                'chargeback_assignments': nav.fn(partial(accordion.click, "Assignments"))})
+                'chargeback_assignments':
+                [nav.fn(partial(accordion.click, "Assignments")),
+                 {'chargeback_assignments_storage':
+                  lambda d: assignment_tree.click_path('Assignments', 'Storage')}]})
 
 
 HOURLY = 'hourly'
 DAILY = 'daily'
 WEEKLY = 'weekly'
 MONTHLY = 'monthly'
+DEFAULT = 'default'
 
 
 @fill.method((RateFormItem, tuple))
@@ -132,6 +140,11 @@ def _fill_rateform(rf, value):
     """value should be like (5, HOURLY)"""
     fill(rf.rate_loc, value[0])
     fill(rf.unit_select_loc, sel.ByValue(value[1]))
+
+
+@fill.method((RateFormItem))
+def _fill_assignform(rf, value):
+    fill(rf.rate_loc, value)
 
 
 class ComputeRate(Updateable, Pretty):
@@ -232,4 +245,29 @@ class StorageRate(Updateable, Pretty):
         sel.force_navigate('chargeback_rates_storage_named', context={'chargeback': self})
         tb_select('Remove from the VMDB', invokes_alert=True)
         sel.handle_alert()
+        flash.assert_no_errors()
+
+
+class Assign(Updateable, Pretty):
+
+    def __init__(self, assign_to=None,
+                 tag_category=None,
+                 ):
+        self.assign_to = assign_to
+        self.tag_category = tag_category
+
+    def storageassign(self):
+        sel.force_navigate('chargeback_assignments_storage', context={'chargeback': self})
+        fill(rate_form,
+            {'assign_to': self.assign_to,
+             'tag_category': self.tag_category},
+            action=rate_form.save_button)
+        flash.assert_no_errors()
+
+    def computeassign(self):
+        sel.force_navigate('chargeback_assignments_compute', context={'chargeback': self})
+        fill(rate_form,
+            {'assign_to': self.assign_to,
+             'tag_category': self.tag_category},
+            action=rate_form.save_button)
         flash.assert_no_errors()
