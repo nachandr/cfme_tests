@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
+from datetime import date
+
 import fauxfactory
 import pytest
-from datetime import date
 
 import cfme.intelligence.chargeback.assignments as cb
 import cfme.intelligence.chargeback.rates as rates
@@ -20,8 +21,8 @@ pytestmark = [
     pytest.mark.usefixtures('uses_infra_providers'),
     test_requirements.ssui,
     pytest.mark.long_running,
-    pytest.mark.uncollectif(lambda: current_version() < '5.8'),
-    pytest.mark.ignore_stream("upstream")
+    pytest.mark.uncollectif(lambda: current_version() > '5.8'),
+    pytest.mark.ignore_stream("upstream", "5.7")
 ]
 
 
