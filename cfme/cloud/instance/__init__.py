@@ -106,7 +106,7 @@ class InstanceProviderAllView(CloudInstanceView):
         tree = ManageIQTree()
 
 
-class InstanceDetailsView(CloudInstanceView):
+class DetailsView(CloudInstanceView):
     @property
     def is_displayed(self):
         expected_name = self.context['object'].name
@@ -417,7 +417,7 @@ class AllForProvider(CFMENavigateStep):
 
 @navigator.register(Instance, 'Details')
 class Details(CFMENavigateStep):
-    VIEW = InstanceDetailsView
+    VIEW = DetailsView
     prerequisite = NavigateToSibling('AllForProvider')
 
     def step(self):

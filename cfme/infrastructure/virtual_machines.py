@@ -212,7 +212,7 @@ class InfraVmSummaryView(VMDetailsEntities):
     datastore_usage = SummaryTable(title="Datastore Actual Usage Summary")
 
 
-class InfraVmDetailsView(InfraVmView):
+class DetailsView(InfraVmView):
     title = Text('#explorer_title_text')
     toolbar = ConditionalSwitchableView(reference='entities.title')
 
@@ -1295,9 +1295,9 @@ class VmAll(CFMENavigateStep):
         self.view.reset_page()
 
 
-@navigator.register(Vm, 'VMsOnlyDetails')
+@navigator.register(Vm, 'Details')
 class VmDetails(CFMENavigateStep):
-    VIEW = InfraVmDetailsView
+    VIEW = DetailsView
     prerequisite = NavigateToSibling('VMsOnly')
 
     def step(self, *args, **kwargs):
@@ -1356,6 +1356,7 @@ class VmMigrate(CFMENavigateStep):
 class VmClone(CFMENavigateStep):
     VIEW = CloneVmView
     prerequisite = NavigateToSibling('Details')
+
 
     def step(self, *args, **kwargs):
         self.prerequisite_view.toolbar.lifecycle.item_select("Clone this VM")
